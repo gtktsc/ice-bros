@@ -89,31 +89,15 @@ const Canvas: React.FC = () => {
 
     p5.noStroke();
     p5.rectMode(p5.CENTER);
-    if (volume.current > 50) p5.background(0);
+    if (pitch.current > 50) p5.background(0);
 
     // rotation
     p5.translate(width / 2, height / 2);
     p5.rotate(p5.frameCount / 100);
     p5.translate(-width / 2, -height / 2);
 
-    const x1Percentage = 1 - notes.current["E"];
-    const x2Percentage = 1 - notes.current["D"];
-    const x3Percentage = 1 - notes.current["G"];
-    const x4Percentage = 1 - notes.current["F"];
+    p5.fill(p5.color(breath.current, modulation.current, volume.current));
 
-    const [x, y] = [halfWidth / 2, halfHeight / 2];
-
-    p5.quad(
-      halfWidth - x * x1Percentage,
-      halfHeight - y * x1Percentage,
-      halfWidth + x * x2Percentage,
-      halfHeight - y * x2Percentage,
-      halfWidth + x * x3Percentage,
-      halfHeight + y * x3Percentage,
-      halfWidth - x * x4Percentage,
-      halfHeight + y * x4Percentage
-    );
-    p5.fill(0);
     new Array(Math.floor(random.current)).fill("").forEach((_, i) => {
       const pos = (i * Math.PI * 2) / 100;
       p5.circle(
@@ -129,6 +113,31 @@ const Canvas: React.FC = () => {
       );
     });
 
+    const x1Percentage = 1 - notes.current["E"];
+    const x2Percentage = 1 - notes.current["D"];
+    const x3Percentage = 1 - notes.current["G"];
+    const x4Percentage = 1 - notes.current["F"];
+
+    const [x, y] = [halfWidth / 2, halfHeight / 2];
+    if (
+      x1Percentage > 0 ||
+      x2Percentage > 0 ||
+      x3Percentage > 0 ||
+      x4Percentage > 0
+    ) {
+      p5.quad(
+        halfWidth - x * x1Percentage,
+        halfHeight - y * x1Percentage,
+        halfWidth + x * x2Percentage,
+        halfHeight - y * x2Percentage,
+        halfWidth + x * x3Percentage,
+        halfHeight + y * x3Percentage,
+        halfWidth - x * x4Percentage,
+        halfHeight + y * x4Percentage
+      );
+    }
+
+    p5.fill(p5.color(100 - breath.current, modulation.current, volume.current));
     new Array(Math.floor(random.current)).fill("").forEach((_, i) => {
       const pos = (i * Math.PI * 2) / 100;
       p5.circle(
