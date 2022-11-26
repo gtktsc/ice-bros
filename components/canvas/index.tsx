@@ -1,33 +1,26 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import p5 from "p5";
 import { WebMidi, type NoteMessageEvent, type MessageEvent } from "webmidi";
-import dynamic from "next/dynamic";
+import P5Canvas from "react-p5";
 
-const DynamicComponentWithNoSSR = dynamic(() => import("react-p5"), {
-  ssr: false,
-});
+interface ComponentProps {}
 
-interface ComponentProps {
-  midi: WebMidi.MIDIAccess;
-}
-
-const Canvas: React.FC<ComponentProps> = ({ midi }: ComponentProps) => {
-  const notes = useRef<NoteMessageEvent[]>([]);
-  const note = useRef<NoteMessageEvent | null>(null);
+const Canvas: React.FC<ComponentProps> = ({}: ComponentProps) => {
+  const [loaded, setIsLoaded] = useState(false);
+  const notes = useRef<{ [key: string]: number }>({});
   const message = useRef<MessageEvent | null>(null);
   const modulation = useRef<number>(100);
   const breath = useRef<number>(100);
   const pitch = useRef<number>(100);
   const volume = useRef<number>(100);
   const opacity = useRef<number>(0);
-  const life = useRef<number>(127);
+  const life = useRef<number>(255);
+  const direction = useRef<"down" | "up">("down");
 
-  const width = document.body.clientWidth;
-  const height = document.body.clientHeight;
-
-  let x = width / 2;
-
-  const y = height / 2;
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  const halfWidth = width / 2;
+  const halfHeight = height / 2;
 
   useEffect(() => {
     WebMidi.enable()
@@ -35,16 +28,15 @@ const Canvas: React.FC<ComponentProps> = ({ midi }: ComponentProps) => {
       .catch((err) => alert(err));
 
     function onEnabled() {
+      setIsLoaded(true);
       if (WebMidi.inputs[0]) {
         WebMidi.inputs[0].addListener("noteon", (e: NoteMessageEvent) => {
-          const newNotes = [...notes.current, e].slice(-20);
+          const current = e.note.name;
+          const newNotes = { ...notes.current, [current]: 1 };
           notes.current = newNotes;
-          note.current = e;
-          opacity.current = 0;
         });
 
         WebMidi.inputs[0].addListener("midimessage", (event) => {
-          console.log({ event });
           // @ts-ignore
           const [type, data, value] = event?.data;
 
@@ -68,46 +60,119 @@ const Canvas: React.FC<ComponentProps> = ({ midi }: ComponentProps) => {
         //@ts-ignore
         window.WebMidi = WebMidi;
       }
+
+      return () => {
+        if (WebMidi.inputs[0]) {
+          WebMidi.inputs[0].removeListener();
+        }
+      };
     }
   }, []);
 
   //See annotations in JS for more information
   const setup = (p5: p5, canvasParentRef: Element) => {
-    p5.createCanvas(
-      document.body.clientWidth,
-      document.body.clientHeight,
-      "webgl"
-    ).parent(canvasParentRef);
+    p5.createCanvas(window.innerWidth, window.innerHeight).parent(
+      canvasParentRef
+    );
   };
   const draw = (p5: p5) => {
     p5.colorMode(p5.HSB, 127);
 
-    p5.background(p5.color(0, 0, life.current));
-
+    p5.noStroke();
     p5.rectMode(p5.CENTER);
-    p5.stroke(p5.color(breath.current, modulation.current, volume.current));
+    p5.background(0);
+
+    // rotation
+    p5.translate(width / 2, height / 2);
+    p5.rotate(p5.frameCount / modulation.current);
+    p5.translate(-width / 2, -height / 2);
+
     p5.fill(p5.color(breath.current, modulation.current, volume.current));
-    p5.rotateX(p5.frameCount * 0.01);
-    p5.rotateY(p5.frameCount * 0.01);
-    notes.current.forEach((currentNote) => {
-      p5.translate(currentNote.note.number || 0, 0);
-      p5.box(opacity.current, opacity.current, opacity.current);
+
+    p5.quad(
+      halfWidth / 2 + halfWidth * (1 - notes.current["E"]),
+      halfHeight / 2 + halfHeight * (1 - notes.current["E"]),
+      halfWidth +
+        (halfWidth / 2 -
+          (halfWidth + halfWidth / 2) * (1 - notes.current["D"])),
+      halfHeight / 2 + (halfHeight / 2) * (1 - notes.current["D"]),
+
+      //bottom
+      halfWidth +
+        halfWidth / 2 -
+        (halfWidth + halfWidth / 2) * (1 - notes.current["G"]),
+      halfHeight +
+        halfHeight / 2 -
+        (halfHeight + halfHeight / 2) * (1 - notes.current["G"]),
+      halfWidth / 2 + (halfWidth / 2) * (1 - notes.current["F"]),
+      halfHeight +
+        halfHeight / 2 -
+        (halfHeight + halfHeight / 2) * (1 - notes.current["F"])
+    );
+
+    Object.entries(notes.current).forEach(([key, currentNote]) => {
+      const size = 200 * currentNote;
+
+      if (key === "E") {
+        currentNote > 0 &&
+          p5.rect(halfWidth / 2, halfHeight - halfHeight / 2, size);
+      } else if (key === "D") {
+        currentNote > 0 &&
+          p5.circle(
+            halfWidth + halfWidth / 2,
+            halfHeight - halfHeight / 2,
+            size
+          );
+      } else if (key === "G") {
+        currentNote > 0 &&
+          p5.arc(
+            halfWidth + halfWidth / 2,
+            halfHeight + halfHeight / 2,
+            size,
+            size,
+            0,
+            2 * p5.PI * currentNote
+          );
+      } else if (key === "F") {
+        currentNote > 0 &&
+          p5.square(
+            halfWidth / 2,
+            halfHeight + halfHeight / 2,
+            size,
+            size / 100
+          );
+      }
+      const newValue = currentNote - 0.01 < 0 ? 0 : currentNote - 0.01;
+      notes.current = { ...notes.current, [key]: newValue };
     });
 
-    if (opacity.current < width / 2) {
-      opacity.current += 1;
-    } else {
-      opacity.current = 0;
+    if (opacity.current > 0) {
+      opacity.current -= 0.1;
     }
-    if (life.current < 0) {
-      life.current = 127;
-    } else {
-      opacity.current += 1;
+
+    if (direction.current === "down") {
+      life.current -= 1;
+      if (life.current < 1) {
+        direction.current = "up";
+      }
+    } else if (direction.current === "up") {
+      life.current += 1;
+      if (life.current > 100) {
+        direction.current = "down";
+      }
     }
   };
 
   //@ts-ignore
-  return <DynamicComponentWithNoSSR setup={setup} draw={draw} />;
+  return loaded ? (
+    <P5Canvas
+      windowResized={(p5) =>
+        p5.resizeCanvas(window.innerWidth, window.innerHeight)
+      }
+      setup={setup}
+      draw={draw}
+    />
+  ) : null;
 };
 
 export default Canvas;
