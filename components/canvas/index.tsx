@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import p5 from "p5";
+import type P5 from "p5";
 import { WebMidi, type NoteMessageEvent, type MessageEvent } from "webmidi";
 import P5Canvas from "react-p5";
 
@@ -70,12 +70,12 @@ const Canvas: React.FC<ComponentProps> = ({}: ComponentProps) => {
   }, []);
 
   //See annotations in JS for more information
-  const setup = (p5: p5, canvasParentRef: Element) => {
+  const setup = (p5: P5, canvasParentRef: Element) => {
     p5.createCanvas(window.innerWidth, window.innerHeight).parent(
       canvasParentRef
     );
   };
-  const draw = (p5: p5) => {
+  const draw = (p5: P5) => {
     p5.colorMode(p5.HSB, 127);
 
     p5.noStroke();
@@ -163,13 +163,14 @@ const Canvas: React.FC<ComponentProps> = ({}: ComponentProps) => {
     }
   };
 
-  //@ts-ignore
   return loaded ? (
     <P5Canvas
       windowResized={(p5) =>
         p5.resizeCanvas(window.innerWidth, window.innerHeight)
       }
+      //@ts-ignore
       setup={setup}
+      //@ts-ignore
       draw={draw}
     />
   ) : null;
