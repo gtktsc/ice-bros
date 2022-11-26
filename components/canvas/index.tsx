@@ -120,10 +120,10 @@ const Canvas: React.FC = () => {
 
     const [x, y] = [halfWidth / 2, halfHeight / 2];
     if (
-      x1Percentage > 0 ||
-      x2Percentage > 0 ||
-      x3Percentage > 0 ||
-      x4Percentage > 0
+      notes.current["E"] > 0 ||
+      notes.current["D"] > 0 ||
+      notes.current["G"] > 0 ||
+      notes.current["F"] > 0
     ) {
       p5.quad(
         halfWidth - x * x1Percentage,
