@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import type P5 from "p5";
 import { WebMidi, type NoteMessageEvent, type MessageEvent } from "webmidi";
 import P5Canvas from "react-p5";
+import { example } from "../../example";
+import { parse } from "../../parse";
 
 const Canvas: React.FC = () => {
   const [loaded, setIsLoaded] = useState(false);
@@ -27,6 +29,12 @@ const Canvas: React.FC = () => {
     function onEnabled() {
       setIsLoaded(true);
       if (WebMidi.inputs[0]) {
+        /// EXAMPLE
+
+        parse(example, { duration: 900, inputs: WebMidi.inputs });
+
+        /// EXAMPLE
+
         WebMidi.inputs[0].addListener("noteon", (e: NoteMessageEvent) => {
           const current = e.note.name;
           const newNotes = { ...notes.current, [current]: 1 };
