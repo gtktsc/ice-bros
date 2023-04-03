@@ -1,4 +1,4 @@
-import { NoteMessageEvent } from "webmidi";
+import { Message, NoteMessageEvent } from "webmidi";
 import { Sketch, State } from "./types";
 
 export const parse = (sketch: Sketch, state: State) =>
@@ -39,37 +39,47 @@ export const parse = (sketch: Sketch, state: State) =>
           state.inputs.forEach((input) => {
             const { event } = currentTrigger;
 
-            input.addListener(event, (currentMidiEvent: NoteMessageEvent) => {
-              const shouldRun = condition.reduce(
-                (acc, { trigger, operator, value, attribute }) => {
-                  let result = acc;
+            input.addListener(
+              event,
+              (currentMidiEvent: Message | NoteMessageEvent) => {
+                const shouldRun = condition.reduce(
+                  (acc, { trigger, operator, value, attribute }) => {
+                    let result = acc;
 
-                  switch (operator) {
-                    case "equal": {
-                      const currentEventTrigger = currentMidiEvent[trigger];
-                      const currentValue =
-                        attribute !== undefined &&
-                        typeof currentEventTrigger === "object"
-                          ? currentEventTrigger[attribute]
-                          : currentEventTrigger;
+                    switch (operator) {
+                      case "equal": {
+                        // @ts-ignore shhhh
+                        const currentEventTrigger = currentMidiEvent[
+                          trigger
+                        ] as
+                          | NoteMessageEvent[keyof NoteMessageEvent]
+                          | Message[keyof Message];
 
-                      result = currentValue === value;
-                      break;
+                        const currentValue =
+                          attribute !== undefined &&
+                          typeof currentEventTrigger === "object"
+                            ? // @ts-ignore shhhh
+                              currentEventTrigger[attribute]
+                            : currentEventTrigger;
+
+                        result = currentValue === value;
+                        break;
+                      }
+                      default: {
+                        result = acc;
+                        break;
+                      }
                     }
-                    default: {
-                      result = acc;
-                      break;
-                    }
-                  }
-                  return result;
-                },
-                true
-              );
+                    return result;
+                  },
+                  true
+                );
 
-              if (shouldRun) {
-                action({ id, type, condition }, state);
+                if (shouldRun) {
+                  action({ id, type, condition }, state);
+                }
               }
-            });
+            );
           });
         }
       }

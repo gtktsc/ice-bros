@@ -1,9 +1,14 @@
 import { Input, InputChannel, Message, Note, NoteMessageEvent } from "webmidi";
 
-type Attribute = keyof (Input | Note | InputChannel | Message);
+type Attribute =
+  | keyof Input
+  | keyof Note
+  | keyof InputChannel
+  | keyof Message
+  | number;
 
 export type MidiCondition = {
-  trigger: keyof NoteMessageEvent;
+  trigger: keyof NoteMessageEvent | keyof Message;
   attribute?: Attribute;
   operator: string;
   value: number | string;
