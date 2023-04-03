@@ -1,8 +1,11 @@
 import { NoteMessageEvent } from "webmidi";
+import { Sketch, State } from "./types";
 
-export const parse = (sketch, state) =>
+export const parse = (sketch: Sketch, state: State) =>
   sketch.events.forEach(({ triggers, action, id }) => {
-    triggers.forEach(({ type, condition, event }) => {
+    triggers.forEach((currentTrigger) => {
+      const { condition, type } = currentTrigger;
+
       switch (type) {
         case "time": {
           const shouldRun = condition.reduce(
@@ -34,6 +37,8 @@ export const parse = (sketch, state) =>
         }
         case "midi": {
           state.inputs.forEach((input) => {
+            const { event } = currentTrigger;
+
             input.addListener(event, (currentMidiEvent: NoteMessageEvent) => {
               const shouldRun = condition.reduce(
                 (acc, { trigger, operator, value, attribute }) => {
@@ -41,10 +46,12 @@ export const parse = (sketch, state) =>
 
                   switch (operator) {
                     case "equal": {
+                      const currentEventTrigger = currentMidiEvent[trigger];
                       const currentValue =
-                        attribute !== undefined
-                          ? currentMidiEvent[trigger][attribute]
-                          : currentMidiEvent[trigger];
+                        attribute !== undefined &&
+                        typeof currentEventTrigger === "object"
+                          ? currentEventTrigger[attribute]
+                          : currentEventTrigger;
 
                       result = currentValue === value;
                       break;

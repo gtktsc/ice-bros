@@ -1,4 +1,6 @@
-export const example = {
+import { Sketch } from "./types";
+
+export const example: Sketch = {
   events: [
     {
       id: "2",
@@ -6,7 +8,7 @@ export const example = {
       triggers: [
         {
           type: "time",
-          condition: [{ trigger: "duration", operator: "after", value: 500 }],
+          condition: [{ trigger: "elapsed", operator: "after", value: 500 }],
         },
       ],
       action: () => {
@@ -19,7 +21,7 @@ export const example = {
       triggers: [
         {
           type: "time",
-          condition: [{ trigger: "duration", operator: "before", value: 1000 }],
+          condition: [{ trigger: "elapsed", operator: "before", value: 1000 }],
         },
       ],
       action: () => {
@@ -33,8 +35,8 @@ export const example = {
         {
           type: "time",
           condition: [
-            { trigger: "duration", operator: "after", value: 700 },
-            { trigger: "duration", operator: "before", value: 800 },
+            { trigger: "elapsed", operator: "after", value: 700 },
+            { trigger: "elapsed", operator: "before", value: 800 },
           ],
         },
       ],

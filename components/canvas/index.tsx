@@ -31,7 +31,7 @@ const Canvas: React.FC = () => {
       if (WebMidi.inputs[0]) {
         /// EXAMPLE
 
-        parse(example, { duration: 900, inputs: WebMidi.inputs });
+        parse(example, { elapsed: 900, inputs: WebMidi.inputs });
 
         /// EXAMPLE
 
